@@ -1,0 +1,51 @@
+version: 1.21.0
+
+components:
+  - name: NotionExporter
+    type: NotionExporter
+    params:
+      api_token: set_as_env_variable
+      export_child_pages: true
+      extract_page_metadata: true
+  - name: DocumentStore
+    type: WeaviateDocumentStore
+    params:
+      embedding_dim: 384
+  - name: Retriever
+    type: EmbeddingRetriever
+    params:
+      document_store: DocumentStore
+      top_k: 5
+      embedding_model: sentence-transformers/all-MiniLM-L6-v2
+  - name: AnswerParser
+    params:
+      reference_pattern: Document\[(\d+)\]
+    type: AnswerParser
+  - name: QAPrompt
+    params:
+      output_parser: AnswerParser
+      prompt: deepset/question-answering-with-references
+    type: PromptTemplate
+  - name: PromptNode
+    params:
+      api_key: set_as_env_variable
+      default_prompt_template: QAPrompt
+      model_name_or_path: gpt-4
+      output_variable: answers
+    type: PromptNode
+
+pipelines:
+  - name: query
+    nodes:
+      - name: Retriever
+        inputs: [Query]
+      - name: PromptNode
+        inputs: [Retriever]
+  - name: indexing
+    nodes:
+      - name: NotionExporter
+        inputs: [File]
+      - name: Retriever
+        inputs: [NotionExporter]
+      - name: DocumentStore
+        inputs: [Retriever]

@@ -1,0 +1,35 @@
+version: "3.1"
+
+services:
+  haystack-api:
+    build: ./haystack-backend
+    ports:
+      - 8000:8000
+    restart: on-failure
+    volumes:
+      - ./pipelines:/opt/pipelines
+      - ./notion_exporter_component/custom_component.py:/opt/venv/lib/python3.10/site-packages/rest_api/pipeline/custom_component.py
+    environment:
+      DOCUMENTSTORE_PARAMS_HOST: http://weaviate
+      PIPELINE_YAML_PATH: /opt/pipelines/notion-search.haystack-pipeline.yml
+    env_file:
+      - ./secrets.env
+    depends_on:
+      weaviate:
+        condition: service_started
+
+  weaviate:
+    image: "semitechnologies/weaviate:1.21.4"
+    environment:
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: "true"
+      PERSISTENCE_DATA_PATH: "/var/lib/weaviate"
+    ports:
+      - 8080:8080
+    restart: on-failure
+
+  ui:
+    build: ./ui
+    ports:
+      - 8501:8501
+    restart: on-failure
+    command: "/bin/bash -c 'sleep 15 && python -m streamlit run webapp.py'"

@@ -1,7 +1,4 @@
-safetensors==0.3.3.post1
-farm-haystack[inference,weaviate,opensearch]==1.20.0
-milvus-haystack
-streamlit==1.23.0
-markdown
-st-annotated-text
-datasets
+farm-haystack[inference,weaviate]==1.21.0
+streamlit
+notion-haystack
+python-dotenv
